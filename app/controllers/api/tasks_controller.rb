@@ -5,30 +5,58 @@ class Api::TasksController < ApplicationController
 
   def create
     task = Task.create(task_params)
-    render json: task
+    if task.save
+      render json: task, status: :created
+    else
+      render json: task.errors.full_messages, status: :unprocessable_entity
+    end
   end  
   
   def update
     task = Task.find(params[:id])
     task.description = params[:description]
     task.done = params[:done]
-    task.save
+    if task.save
+      render json: task, status: :ok
+    else
+      render json: task.errors.full_messages, status: :unprocessable_entity
+    end
   end 
 
   def check_all
-    Task.update_all done: true
+    tasks = Task.all
+    if tasks.update_all done: true
+      head :no_content
+    else
+      render json: task.errors.full_messages, status: :unprocessable_entity
+    end
   end
 
   def uncheck_all
-    Task.update_all done: false
+    tasks = Task.all
+    if tasks.update_all done: false
+      head :no_content
+    else
+      render json: task.errors.full_messages, status: :unprocessable_entity
+    end
   end
 
   def destroy
-    Task.destroy(params[:id])
+    task = Task.find(params[:id])
+    if task.destroy
+      head :no_content
+    else
+      render json: task.errors.full_messages, status: :unprocessable_entity
+    end
   end
 
   def destroy_checked
-    Task.where(:done => true).delete_all
+    tasksDone = Task.where(done: true)
+    if tasksDone.destroy_all
+      head :no_content
+    else
+      render json: task.errors.full_messages, status: :unprocessable_entity
+    end
   end
 
   private
