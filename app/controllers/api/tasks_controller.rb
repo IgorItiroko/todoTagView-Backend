@@ -14,8 +14,13 @@ class Api::TasksController < ApplicationController
   
   def update
     task = Task.find(params[:id])
-    task.description = params[:description]
-    task.done = params[:done]
+
+    if params.has_key?(:description)
+      task.description = params[:description]
+    else
+      task.done = params[:done]
+    end
+
     if task.save
       render json: task, status: :ok
     else
