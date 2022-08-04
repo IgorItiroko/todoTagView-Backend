@@ -1,10 +1,12 @@
 class Api::TasksController < ApplicationController
+  before_action :find_task, only: [:update, :destroy ]
+
   def index
     render json: Task.all
   end
 
   def create
-    task = Task.create(task_params)
+    task = Task.create(create_params.merge!({done: false}))
     if task.save
       render json: task, status: :created
     else
@@ -13,18 +15,10 @@ class Api::TasksController < ApplicationController
   end  
   
   def update
-    task = Task.find(params[:id])
-
-    if params.has_key?(:description)
-      task.description = params[:description]
+    if @task.update(update_params)
+      render json: @task
     else
-      task.done = params[:done]
-    end
-
-    if task.save
-      render json: task, status: :ok
-    else
-      render json: task.errors.full_messages, status: :unprocessable_entity
+      render json: @task.errors.full_messages, status: :unprocessable_entity
     end
   end 
 
@@ -32,8 +26,10 @@ class Api::TasksController < ApplicationController
     tasks = Task.all
     if tasks.update_all done: true
       head :no_content
+      return true;
     else
-      render json: task.errors.full_messages, status: :unprocessable_entity
+      render json: tasks.map{|task| task.errors.full_messages}, status: :unprocessable_entity
+      return false;    
     end
   end
 
@@ -41,17 +37,20 @@ class Api::TasksController < ApplicationController
     tasks = Task.all
     if tasks.update_all done: false
       head :no_content
+      return true;
     else
-      render json: task.errors.full_messages, status: :unprocessable_entity
+      render json: tasks.map{ |task| task.errors.full_messages}, status: :unprocessable_entity
+      return false;
     end
   end
 
   def destroy
-    task = Task.find(params[:id])
-    if task.destroy
+    if @task.destroy
       head :no_content
+      return true;
     else
-      render json: task.errors.full_messages, status: :unprocessable_entity
+      render json: @task.errors.full_messages, status: :unprocessable_entity
+      return false;
     end
   end
 
@@ -59,15 +58,24 @@ class Api::TasksController < ApplicationController
     tasksDone = Task.where(done: true)
     if tasksDone.destroy_all
       head :no_content
+      return true;
     else
-      render json: task.errors.full_messages, status: :unprocessable_entity
+      render json: tasksDone.map{ |taskDone| taskDone.errors.full_messages} ,status: :unprocessable_entity
+      return false;
     end
   end
 
   private
 
-  def task_params
-    params.require(:task).permit(:description, :done)
+  def create_params
+    params.require(:task).permit(:description)
   end
 
+  def update_params
+    params.require(:task).permit(:description, :done)
+  end 
+
+  def find_task
+    @task = Task.find(params[:id]);
+  end
 end
