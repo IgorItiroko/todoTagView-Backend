@@ -1,8 +1,8 @@
 class Api::TasksController < ApplicationController
   before_action :find_task, only: [:update, :destroy ]
-  before_action :find_all, only: [:index, :check_all, :uncheck_all]
+
   def index
-    render json: @tasks
+    render json: Task.all
   end
 
   def create
@@ -22,24 +22,9 @@ class Api::TasksController < ApplicationController
     end
   end 
 
-  def check_all
-    if @tasks.update_all done: true
-      head :no_content
-      return true;
-    else
-      render json: tasks.map{|task| task.errors.full_messages}, status: :unprocessable_entity
-      return false;    
-    end
-  end
-
-  def uncheck_all
-    if @tasks.update_all done: false
-      head :no_content
-      return true;
-    else
-      render json: tasks.map{ |task| task.errors.full_messages}, status: :unprocessable_entity
-      return false;
-    end
+  def toggle_all_done
+    Task.where(done: !:done).update_all(done: :done)
+    head :no_content
   end
 
   def destroy
@@ -53,14 +38,8 @@ class Api::TasksController < ApplicationController
   end
 
   def destroy_checked
-    tasksDone = Task.where(done: true)
-    if tasksDone.destroy_all
+    Task.where(done:true).destroy_all
       head :no_content
-      return true;
-    else
-      render json: tasksDone.map{ |taskDone| taskDone.errors.full_messages} ,status: :unprocessable_entity
-      return false;
-    end
   end
 
   private
@@ -77,7 +56,4 @@ class Api::TasksController < ApplicationController
     @task = Task.find(params[:id]);
   end
 
-  def find_all
-    @tasks = Task.all
-  end
 end
