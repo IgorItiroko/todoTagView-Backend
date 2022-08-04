@@ -1,8 +1,8 @@
 class Api::TasksController < ApplicationController
   before_action :find_task, only: [:update, :destroy ]
-
+  before_action :find_all, only: [:index, :check_all, :uncheck_all]
   def index
-    render json: Task.all
+    render json: @tasks
   end
 
   def create
@@ -23,8 +23,7 @@ class Api::TasksController < ApplicationController
   end 
 
   def check_all
-    tasks = Task.all
-    if tasks.update_all done: true
+    if @tasks.update_all done: true
       head :no_content
       return true;
     else
@@ -34,8 +33,7 @@ class Api::TasksController < ApplicationController
   end
 
   def uncheck_all
-    tasks = Task.all
-    if tasks.update_all done: false
+    if @tasks.update_all done: false
       head :no_content
       return true;
     else
@@ -77,5 +75,9 @@ class Api::TasksController < ApplicationController
 
   def find_task
     @task = Task.find(params[:id]);
+  end
+
+  def find_all
+    @tasks = Task.all
   end
 end
